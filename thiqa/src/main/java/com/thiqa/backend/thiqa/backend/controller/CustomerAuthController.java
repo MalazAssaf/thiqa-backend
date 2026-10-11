@@ -3,6 +3,8 @@ package com.thiqa.backend.thiqa.backend.controller;
 import com.thiqa.backend.thiqa.backend.dto.CustomerResponse;
 import com.thiqa.backend.thiqa.backend.dto.CustomerSignupRequest;
 import com.thiqa.backend.thiqa.backend.service.CustomerAuthService;
+import com.thiqa.backend.thiqa.backend.shared.GlobalResponse;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,18 +19,18 @@ public class CustomerAuthController {
 
   @PostMapping("/signup")
   @ResponseStatus(HttpStatus.CREATED)
-  public CustomerResponse signup(@Valid @RequestBody CustomerSignupRequest request) {
-    return customerAuthService.signup(request);
+  public GlobalResponse<CustomerResponse> signup(@Valid @RequestBody CustomerSignupRequest request) {
+    return new GlobalResponse<>(customerAuthService.signup(request));
   }
 
   @PostMapping("/verify")
-  public CustomerResponse verify(@RequestParam String email, @RequestParam String code) {
-    return customerAuthService.verifyEmail(email, code);
+  public GlobalResponse<CustomerResponse> verify(@RequestParam String email, @RequestParam String code) {
+    return new GlobalResponse<>(customerAuthService.verifyEmail(email, code));
   }
 
   @PostMapping("/resend-code")
-  @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void resendCode(@RequestParam String email) {
+  public GlobalResponse<String> resendCode(@RequestParam String email) {
     customerAuthService.resendCode(email);
+    return new GlobalResponse<>("Code sent.");
   }
 }

@@ -4,11 +4,11 @@ import com.thiqa.backend.thiqa.backend.dto.CustomerResponse;
 import com.thiqa.backend.thiqa.backend.dto.CustomerSignupRequest;
 import com.thiqa.backend.thiqa.backend.entity.Customer;
 import com.thiqa.backend.thiqa.backend.repository.CustomerRepository;
+import com.thiqa.backend.thiqa.backend.shared.CustomResponseException;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -18,15 +18,20 @@ public class CustomerAuthService {
   private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
   private final VerificationService verificationService;
 
+  private CustomerResponse toResponse(Customer c) {
+    return new CustomerResponse(c.getId(), c.getFullName(), c.getEmail(),
+        c.getPhone(), c.getCity(), c.isEmailVerified(), c.getCreatedAt());
+  }
+
   public CustomerResponse signup(CustomerSignupRequest request) {
     String email = request.email().trim().toLowerCase();
     String phone = request.phone().trim();
 
     if (customerRepository.existsByEmail(email)) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT, "This email is already registered.");
+      throw CustomResponseException.conflictException("This email is already registered.");
     }
     if (customerRepository.existsByPhone(phone)) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT, "This phone number is already linked to an account.");
+      throw CustomResponseException.conflictException("This phone number is already linked to an account.");
     }
 
     Customer customer = new Customer();
@@ -39,37 +44,29 @@ public class CustomerAuthService {
     Customer saved = customerRepository.save(customer);
     verificationService.sendCode(customer);
 
-    return new CustomerResponse(
-        saved.getId(),
-        saved.getFullName(),
-        saved.getEmail(),
-        saved.getPhone(),
-        saved.getCity(),
-        saved.isEmailVerified(),
-        saved.getCreatedAt());
+    return toResponse(saved);
   }
 
   public CustomerResponse verifyEmail(String email, String code) {
     Customer customer = customerRepository.findByEmail(email.trim().toLowerCase())
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found."));
+        .orElseThrow(() -> CustomResponseException.resourceNotFoundException("Account not found."));
 
     if (customer.isEmailVerified()) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT, "This email is already verified.");
+      throw CustomResponseException.conflictException("This email is already verified.");
     }
 
     verificationService.checkCode(customer, code);
     customer.setEmailVerified(true);
     customerRepository.save(customer);
 
-    return new CustomerResponse(customer.getId(), customer.getFullName(), customer.getEmail(),
-        customer.getPhone(), customer.getCity(), customer.isEmailVerified(), customer.getCreatedAt());
+    return toResponse(customer);
   }
 
   public void resendCode(String email) {
     Customer customer = customerRepository.findByEmail(email.trim().toLowerCase())
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found."));
+        .orElseThrow(() -> CustomResponseException.resourceNotFoundException("Account not found."));
     if (customer.isEmailVerified()) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT, "This email is already verified.");
+      throw CustomResponseException.conflictException("This email is already verified.");
     }
 
     verificationService.sendCode(customer);
