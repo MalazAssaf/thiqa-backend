@@ -16,6 +16,7 @@ public class CustomerAuthService {
 
   private final CustomerRepository customerRepository;
   private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+  private final VerificationService verificationService;
 
   public CustomerResponse signup(CustomerSignupRequest request) {
     String email = request.email().trim().toLowerCase();
@@ -36,6 +37,7 @@ public class CustomerAuthService {
     customer.setPasswordHash(passwordEncoder.encode(request.password()));
 
     Customer saved = customerRepository.save(customer);
+    verificationService.sendCode(customer);
 
     return new CustomerResponse(
         saved.getId(),
@@ -45,5 +47,31 @@ public class CustomerAuthService {
         saved.getCity(),
         saved.isEmailVerified(),
         saved.getCreatedAt());
+  }
+
+  public CustomerResponse verifyEmail(String email, String code) {
+    Customer customer = customerRepository.findByEmail(email.trim().toLowerCase())
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found."));
+
+    if (customer.isEmailVerified()) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "This email is already verified.");
+    }
+
+    verificationService.checkCode(customer, code);
+    customer.setEmailVerified(true);
+    customerRepository.save(customer);
+
+    return new CustomerResponse(customer.getId(), customer.getFullName(), customer.getEmail(),
+        customer.getPhone(), customer.getCity(), customer.isEmailVerified(), customer.getCreatedAt());
+  }
+
+  public void resendCode(String email) {
+    Customer customer = customerRepository.findByEmail(email.trim().toLowerCase())
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found."));
+    if (customer.isEmailVerified()) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "This email is already verified.");
+    }
+
+    verificationService.sendCode(customer);
   }
 }

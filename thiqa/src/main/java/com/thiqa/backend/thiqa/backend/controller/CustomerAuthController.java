@@ -20,4 +20,15 @@ public class CustomerAuthController {
   public CustomerResponse signup(@Valid @RequestBody CustomerSignupRequest request) {
     return customerAuthService.signup(request);
   }
+
+  @PostMapping("/verify")
+  public CustomerResponse verify(@RequestParam String email, @RequestParam String code) {
+    return customerAuthService.verifyEmail(email, code);
+  }
+
+  @PostMapping("/resend-code")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void resendCode(@RequestParam String email) {
+    customerAuthService.resendCode(email);
+  }
 }
