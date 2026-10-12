@@ -1,9 +1,13 @@
 package com.thiqa.backend.thiqa.backend.service;
 
+import com.thiqa.backend.thiqa.backend.dto.CustomerLoginResponse;
 import com.thiqa.backend.thiqa.backend.dto.CustomerResponse;
 import com.thiqa.backend.thiqa.backend.dto.CustomerSignupRequest;
+import com.thiqa.backend.thiqa.backend.dto.LoginRequest;
 import com.thiqa.backend.thiqa.backend.entity.Customer;
-import com.thiqa.backend.thiqa.backend.repository.CustomerRepository;
+import com.thiqa.backend.thiqa.backend.entity.Role;
+import com.thiqa.backend.thiqa.backend.entity.UserAccount;
+import com.thiqa.backend.thiqa.backend.repository.UserAccountRepository;
 import com.thiqa.backend.thiqa.backend.shared.CustomResponseException;
 
 import lombok.RequiredArgsConstructor;
@@ -14,23 +18,24 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CustomerAuthService {
 
-  private final CustomerRepository customerRepository;
+  private final UserAccountRepository userAccountRepository;
   private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
   private final VerificationService verificationService;
+  private final JwtService jwtService;
 
   private CustomerResponse toResponse(Customer c) {
     return new CustomerResponse(c.getId(), c.getFullName(), c.getEmail(),
-        c.getPhone(), c.getCity(), c.isEmailVerified(), c.getCreatedAt());
+        c.getPhone(), c.getCity(), c.isEmailVerified());
   }
 
   public CustomerResponse signup(CustomerSignupRequest request) {
     String email = request.email().trim().toLowerCase();
     String phone = request.phone().trim();
 
-    if (customerRepository.existsByEmail(email)) {
+    if (userAccountRepository.existsByEmail(email)) {
       throw CustomResponseException.conflictException("This email is already registered.");
     }
-    if (customerRepository.existsByPhone(phone)) {
+    if (userAccountRepository.existsByPhone(phone)) {
       throw CustomResponseException.conflictException("This phone number is already linked to an account.");
     }
 
@@ -39,36 +44,52 @@ public class CustomerAuthService {
     customer.setEmail(email);
     customer.setPhone(phone);
     customer.setCity(request.city());
+    customer.setRole(Role.CUSTOMER);
     customer.setPasswordHash(passwordEncoder.encode(request.password()));
 
-    Customer saved = customerRepository.save(customer);
+    Customer saved = userAccountRepository.save(customer);
     verificationService.sendCode(customer);
 
     return toResponse(saved);
   }
 
-  public CustomerResponse verifyEmail(String email, String code) {
-    Customer customer = customerRepository.findByEmail(email.trim().toLowerCase())
-        .orElseThrow(() -> CustomResponseException.resourceNotFoundException("Account not found."));
-
-    if (customer.isEmailVerified()) {
+  public void verifyEmail(String email, String code) {
+    UserAccount user = findByEmail(email);
+    if (user.isEmailVerified()) {
       throw CustomResponseException.conflictException("This email is already verified.");
     }
 
-    verificationService.checkCode(customer, code);
-    customer.setEmailVerified(true);
-    customerRepository.save(customer);
-
-    return toResponse(customer);
+    verificationService.checkCode(user, code);
+    user.setEmailVerified(true);
+    userAccountRepository.save(user);
   }
 
   public void resendCode(String email) {
-    Customer customer = customerRepository.findByEmail(email.trim().toLowerCase())
-        .orElseThrow(() -> CustomResponseException.resourceNotFoundException("Account not found."));
-    if (customer.isEmailVerified()) {
+    UserAccount user = findByEmail(email);
+    if (user.isEmailVerified()) {
       throw CustomResponseException.conflictException("This email is already verified.");
     }
 
-    verificationService.sendCode(customer);
+    verificationService.sendCode(user);
+  }
+
+  public CustomerLoginResponse login(LoginRequest request) {
+    UserAccount user = userAccountRepository.findByPhone(request.phone().trim())
+        .filter(u -> passwordEncoder.matches(request.password(), u.getPasswordHash()))
+        .orElse(null);
+
+    if (!(user instanceof Customer customer)) {
+      throw CustomResponseException.badCredentials();
+    }
+    if (!customer.isEmailVerified()) {
+      throw CustomResponseException.forbiddenException("Please verify your email first.");
+    }
+
+    return new CustomerLoginResponse(toResponse(customer), jwtService.generateToken(customer));
+  }
+
+  private UserAccount findByEmail(String email) {
+    return userAccountRepository.findByEmail(email.trim().toLowerCase())
+        .orElseThrow(() -> CustomResponseException.resourceNotFoundException("Account not found."));
   }
 }

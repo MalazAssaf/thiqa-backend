@@ -1,6 +1,6 @@
 package com.thiqa.backend.thiqa.backend.service;
 
-import com.thiqa.backend.thiqa.backend.entity.Customer;
+import com.thiqa.backend.thiqa.backend.entity.UserAccount;
 import com.thiqa.backend.thiqa.backend.entity.VerificationCode;
 import com.thiqa.backend.thiqa.backend.repository.VerificationCodeRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,24 +15,23 @@ import java.util.Random;
 @RequiredArgsConstructor
 public class VerificationService {
 
-  private final VerificationCodeRepository codeRepository;
+  private final VerificationCodeRepository verificationCodeRepository;
   private final EmailService emailService;
 
-  public void sendCode(Customer customer) {
+  public void sendCode(UserAccount user) {
     String code = String.valueOf(1000 + new Random().nextInt(9000));
 
     VerificationCode verificationCode = new VerificationCode();
-    verificationCode.setCustomer(customer);
+    verificationCode.setUser(user);
     verificationCode.setCode(code);
     verificationCode.setExpiresAt(LocalDateTime.now().plusMinutes(10));
-    codeRepository.save(verificationCode);
+    verificationCodeRepository.save(verificationCode);
 
-    emailService.sendVerificationCode(customer.getEmail(), code);
+    emailService.sendVerificationCode(user.getEmail(), code);
   }
 
-  public void checkCode(Customer customer, String code) {
-    VerificationCode verificationCode = codeRepository
-        .findTopByCustomerAndUsedFalseOrderByIdDesc(customer)
+  public void checkCode(UserAccount user, String code) {
+    VerificationCode verificationCode = verificationCodeRepository.findTopByUserAndUsedFalseOrderByIdDesc(user)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No code found."));
 
     if (verificationCode.getExpiresAt().isBefore(LocalDateTime.now())) {
@@ -44,6 +43,6 @@ public class VerificationService {
     }
 
     verificationCode.setUsed(true);
-    codeRepository.save(verificationCode);
+    verificationCodeRepository.save(verificationCode);
   }
 }

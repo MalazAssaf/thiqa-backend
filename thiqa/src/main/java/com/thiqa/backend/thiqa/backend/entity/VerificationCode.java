@@ -25,11 +25,6 @@ public class VerificationCode {
   private boolean used = false;
 
   @ManyToOne
-  @JoinColumn(name = "customer_id")
-  private Customer customer;
-
-  // add when the Store entity exists:
-  // @ManyToOne
-  // @JoinColumn(name = "store_id")
-  // private Store store;
+  @JoinColumn(name = "user_id", nullable = false)
+  private UserAccount user;
 }
