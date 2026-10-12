@@ -53,30 +53,10 @@ public class CustomerAuthService {
     return toResponse(saved);
   }
 
-  public void verifyEmail(String email, String code) {
-    UserAccount user = findByEmail(email);
-    if (user.isEmailVerified()) {
-      throw CustomResponseException.conflictException("This email is already verified.");
-    }
-
-    verificationService.checkCode(user, code);
-    user.setEmailVerified(true);
-    userAccountRepository.save(user);
-  }
-
-  public void resendCode(String email) {
-    UserAccount user = findByEmail(email);
-    if (user.isEmailVerified()) {
-      throw CustomResponseException.conflictException("This email is already verified.");
-    }
-
-    verificationService.sendCode(user);
-  }
-
   public CustomerLoginResponse login(LoginRequest request) {
     UserAccount user = userAccountRepository.findByPhone(request.phone().trim())
         .filter(u -> passwordEncoder.matches(request.password(), u.getPasswordHash()))
-        .orElse(null);
+        .orElseThrow(() -> CustomResponseException.badCredentials());
 
     if (!(user instanceof Customer customer)) {
       throw CustomResponseException.badCredentials();
@@ -88,8 +68,4 @@ public class CustomerAuthService {
     return new CustomerLoginResponse(toResponse(customer), jwtService.generateToken(customer));
   }
 
-  private UserAccount findByEmail(String email) {
-    return userAccountRepository.findByEmail(email.trim().toLowerCase())
-        .orElseThrow(() -> CustomResponseException.resourceNotFoundException("Account not found."));
-  }
 }
