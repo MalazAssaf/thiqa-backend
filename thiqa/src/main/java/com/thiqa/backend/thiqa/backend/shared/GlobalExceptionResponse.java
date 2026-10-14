@@ -21,7 +21,7 @@ public class GlobalExceptionResponse {
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<GlobalResponse<Void>> handleValidationException(MethodArgumentNotValidException ex) {
     var errors = ex.getBindingResult().getFieldErrors().stream()
-        .map(err -> new GlobalResponse.ErrorItem(err.getField() + ": " + err.getDefaultMessage()))
+        .map(err -> new GlobalResponse.ErrorItem(err.getDefaultMessage()))
         .toList();
     return new ResponseEntity<>(new GlobalResponse<>(errors), HttpStatus.BAD_REQUEST);
   }
