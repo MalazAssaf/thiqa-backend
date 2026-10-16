@@ -30,6 +30,11 @@ public class CustomerAuthController {
   @PostMapping("/login")
   public ResponseEntity<GlobalResponse<CustomerResponse>> login(@Valid @RequestBody LoginRequest request) {
     CustomerLoginResponse auth = customerAuthService.login(request);
+
+    if (auth.token() == null) {
+      return ResponseEntity.ok(new GlobalResponse<>(auth.customer()));
+    }
+
     return ResponseEntity.ok()
         .header(HttpHeaders.SET_COOKIE, jwtService.createCookie(auth.token()).toString())
         .body(new GlobalResponse<>(auth.customer()));

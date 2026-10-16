@@ -61,8 +61,10 @@ public class CustomerAuthService {
     if (!(user instanceof Customer customer)) {
       throw CustomResponseException.badCredentials();
     }
+
     if (!customer.isEmailVerified()) {
-      throw CustomResponseException.forbiddenException("Please verify your email first.");
+      verificationService.sendCode(customer);
+      return new CustomerLoginResponse(toResponse(customer), null); // no token for unverified emails
     }
 
     return new CustomerLoginResponse(toResponse(customer), jwtService.generateToken(customer));
