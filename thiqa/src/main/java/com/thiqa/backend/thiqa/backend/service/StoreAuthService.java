@@ -26,7 +26,7 @@ public class StoreAuthService {
 
   private StoreResponse toResponse(Store s) {
     return new StoreResponse(s.getId(), s.getName(), s.getCategory(), s.getCity(),
-        s.getEmail(), s.getPhone(), s.isEmailVerified());
+        s.getEmail(), s.getPhone(), s.isEmailVerified(), s.isAutoReject(), s.getRejectThreshold());
   }
 
   public StoreResponse signup(StoreSignupRequest request) {
@@ -48,6 +48,13 @@ public class StoreAuthService {
     store.setPhone(phone);
     store.setRole(Role.STORE);
     store.setPasswordHash(passwordEncoder.encode(request.password()));
+
+    if (Boolean.TRUE.equals(request.autoReject())) {
+      store.setAutoReject(true);
+      if (request.rejectThreshold() != null) {
+        store.setRejectThreshold(request.rejectThreshold());
+      }
+    }
 
     Store saved = userAccountRepository.save(store);
     verificationService.sendCode(saved);
