@@ -7,6 +7,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.List;
 
@@ -34,6 +35,13 @@ public class GlobalExceptionResponse {
   @ExceptionHandler(DataIntegrityViolationException.class)
   public ResponseEntity<GlobalResponse<Void>> handleDataIntegrity(DataIntegrityViolationException ex) {
     return error(HttpStatus.CONFLICT, "Duplicate or invalid data provided.");
+  }
+
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  public ResponseEntity<GlobalResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+    return new ResponseEntity<>(
+        new GlobalResponse<>(List.of(new GlobalResponse.ErrorItem("Invalid value for " + ex.getName() + "."))),
+        HttpStatus.BAD_REQUEST);
   }
 
   @ExceptionHandler(Exception.class)
