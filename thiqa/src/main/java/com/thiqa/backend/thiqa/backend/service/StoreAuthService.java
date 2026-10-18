@@ -70,8 +70,10 @@ public class StoreAuthService {
     if (!(user instanceof Store store)) {
       throw CustomResponseException.badCredentials();
     }
+
     if (!store.isEmailVerified()) {
-      throw CustomResponseException.forbiddenException("Please verify your email first.");
+      verificationService.sendCode(store);
+      return new StoreLoginResponse(toResponse(store), null);
     }
 
     return new StoreLoginResponse(toResponse(store), jwtService.generateToken(store));

@@ -33,6 +33,11 @@ public class StoreAuthController {
   @PostMapping("/login")
   public ResponseEntity<GlobalResponse<StoreResponse>> login(@Valid @RequestBody LoginRequest request) {
     StoreLoginResponse auth = storeAuthService.login(request);
+
+    if (auth.token() == null) {
+      return ResponseEntity.ok(new GlobalResponse<>(auth.store()));
+    }
+
     return ResponseEntity.ok()
         .header(HttpHeaders.SET_COOKIE, jwtService.createCookie(auth.token()).toString())
         .body(new GlobalResponse<>(auth.store()));
