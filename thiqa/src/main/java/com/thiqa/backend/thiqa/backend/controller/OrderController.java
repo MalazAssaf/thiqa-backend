@@ -30,4 +30,9 @@ public class OrderController {
   public GlobalResponse<List<OrderResponse>> myOrders(@AuthenticationPrincipal Customer customer) {
     return new GlobalResponse<>(orderService.myOrders(customer));
   }
+
+  @PatchMapping("/{id}/cancel")
+  public GlobalResponse<OrderResponse> cancel(@AuthenticationPrincipal Customer customer, @PathVariable Long id) {
+    return new GlobalResponse<>(orderService.cancel(customer, id));
+  }
 }
