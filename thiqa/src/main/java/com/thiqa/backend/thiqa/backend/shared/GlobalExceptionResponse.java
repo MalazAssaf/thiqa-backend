@@ -4,6 +4,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -42,6 +43,13 @@ public class GlobalExceptionResponse {
     return new ResponseEntity<>(
         new GlobalResponse<>(List.of(new GlobalResponse.ErrorItem("Invalid value for " + ex.getName() + "."))),
         HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+  public ResponseEntity<GlobalResponse<Void>> handleMediaType(HttpMediaTypeNotSupportedException ex) {
+    return new ResponseEntity<>(
+        new GlobalResponse<>(List.of(new GlobalResponse.ErrorItem("Unsupported request format."))),
+        HttpStatus.UNSUPPORTED_MEDIA_TYPE);
   }
 
   @ExceptionHandler(Exception.class)
