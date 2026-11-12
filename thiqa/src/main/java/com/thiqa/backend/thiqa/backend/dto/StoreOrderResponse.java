@@ -8,13 +8,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record StoreOrderResponse(
-    Long id,
-    OrderStatus status,
-    PaymentMethod paymentMethod,
-    boolean delayed,
-    Integer scoreAtOrder,
-    BigDecimal total,
-    LocalDateTime createdAt,
-    LocalDateTime closedAt,
-    List<OrderResponse.Item> items) {
+        Long id,
+        String customerLabel,
+        OrderStatus status,
+        PaymentMethod paymentMethod,
+        boolean delayed,
+        Integer scoreAtOrder,
+        BigDecimal total,
+        LocalDateTime createdAt,
+        LocalDateTime closedAt,
+        List<OrderResponse.Item> items) {
 }

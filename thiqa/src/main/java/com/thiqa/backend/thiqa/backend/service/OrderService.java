@@ -68,6 +68,7 @@ public class OrderService {
     }
 
     order.setTotal(total);
+    order.setStatus(request.paymentMethod() == PaymentMethod.CARD ? OrderStatus.CONFIRMED : OrderStatus.PENDING);
     return toResponse(orderRepository.save(order));
   }
 
@@ -185,6 +186,7 @@ public class OrderService {
   private StoreOrderResponse toStoreResponse(Order o) {
     return new StoreOrderResponse(
         o.getId(),
+        "Customer C-" + String.format("%02d", o.getCustomer().getId()),
         o.getStatus(),
         o.getPaymentMethod(),
         o.isDelayed(),
