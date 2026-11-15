@@ -31,6 +31,7 @@ public class OrderService {
   private final StoreRepository storeRepository;
   private final ProductRepository productRepository;
   private final OrderRepository orderRepository;
+  private final ScoreService scoreService;
 
   @Transactional
   public OrderResponse place(Customer customer, OrderRequest request) {
@@ -42,7 +43,7 @@ public class OrderService {
     order.setCustomer(customer);
     order.setStore(store);
     order.setPaymentMethod(request.paymentMethod());
-    // scoreAtOrder: set here once the score algorithm is ready (COD only)
+    order.setScoreAtOrder(scoreService.score(customer));
 
     BigDecimal total = BigDecimal.ZERO;
 
