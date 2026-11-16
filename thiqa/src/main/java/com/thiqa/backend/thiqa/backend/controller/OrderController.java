@@ -35,4 +35,10 @@ public class OrderController {
   public GlobalResponse<OrderResponse> cancel(@AuthenticationPrincipal Customer customer, @PathVariable Long id) {
     return new GlobalResponse<>(orderService.cancel(customer, id));
   }
+
+  @GetMapping("/{id}")
+  public GlobalResponse<OrderResponse> getOne(@AuthenticationPrincipal Customer customer,
+      @PathVariable Long id) {
+    return new GlobalResponse<>(orderService.getMine(customer, id));
+  }
 }

@@ -149,7 +149,7 @@ public class OrderService {
   public StoreOrderResponse markDelivered(Store store, Long id) {
     Order o = findForStore(store, id);
     if (o.getStatus() != OrderStatus.OUT_FOR_DELIVERY) {
-      throw CustomResponseException.badRequestException("Only confirmed orders can be marked as delivered.");
+      throw CustomResponseException.badRequestException("Only orders out for delivery can be marked as delivered.");
     }
     close(o, OrderStatus.DELIVERED, false);
     return toStoreResponse(o);
@@ -159,7 +159,7 @@ public class OrderService {
   public StoreOrderResponse markRefused(Store store, Long id) {
     Order o = findForStore(store, id);
     if (o.getStatus() != OrderStatus.OUT_FOR_DELIVERY) {
-      throw CustomResponseException.badRequestException("Only confirmed orders can be marked as refused.");
+      throw CustomResponseException.badRequestException("Only orders out for delivery can be marked as refused.");
     }
     if (o.getPaymentMethod() != PaymentMethod.COD) {
       throw CustomResponseException.badRequestException("Only cash on delivery orders can be refused.");
@@ -212,6 +212,12 @@ public class OrderService {
       throw CustomResponseException.badRequestException("This order can no longer be cancelled.");
     }
     close(o, OrderStatus.CANCELLED, true);
+    return toResponse(o);
+  }
+
+  public OrderResponse getMine(Customer customer, Long id) {
+    Order o = orderRepository.findByIdAndCustomer(id, customer)
+        .orElseThrow(() -> CustomResponseException.resourceNotFoundException("Order not found."));
     return toResponse(o);
   }
 
