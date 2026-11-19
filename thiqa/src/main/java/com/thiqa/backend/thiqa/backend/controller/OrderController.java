@@ -41,4 +41,10 @@ public class OrderController {
       @PathVariable Long id) {
     return new GlobalResponse<>(orderService.getMine(customer, id));
   }
+
+  @GetMapping("/cod-allowed")
+  public GlobalResponse<Boolean> codAllowed(@AuthenticationPrincipal Customer customer,
+      @RequestParam Long storeId) {
+    return new GlobalResponse<>(orderService.codAllowed(customer, storeId));
+  }
 }

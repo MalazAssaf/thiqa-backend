@@ -39,11 +39,18 @@ public class OrderService {
         .orElseThrow(
             () -> CustomResponseException.resourceNotFoundException("Store with " + request.storeId() + " not found!"));
 
+    Integer score = scoreService.score(customer);
+
+    if (request.paymentMethod() == PaymentMethod.COD && !codAllowed(store, score)) {
+      throw CustomResponseException.badRequestException(
+          "Cash on delivery isn't available for this order. Please pay by card.");
+    }
+
     Order order = new Order();
     order.setCustomer(customer);
     order.setStore(store);
     order.setPaymentMethod(request.paymentMethod());
-    order.setScoreAtOrder(scoreService.score(customer));
+    order.setScoreAtOrder(score);
 
     BigDecimal total = BigDecimal.ZERO;
 
@@ -171,6 +178,18 @@ public class OrderService {
   private Order findForStore(Store store, Long id) {
     return orderRepository.findByIdAndStore(id, store)
         .orElseThrow(() -> CustomResponseException.resourceNotFoundException("Order not found."));
+  }
+
+  private boolean codAllowed(Store store, Integer score) {
+    return !store.isAutoReject()
+        || score == null
+        || score >= store.getRejectThreshold();
+  }
+
+  public boolean codAllowed(Customer customer, Long storeId) {
+    Store store = storeRepository.findById(storeId)
+        .orElseThrow(() -> CustomResponseException.resourceNotFoundException("Store not found."));
+    return codAllowed(store, scoreService.score(customer));
   }
 
   private void close(Order o, OrderStatus finalStatus, boolean restoreStock) {
