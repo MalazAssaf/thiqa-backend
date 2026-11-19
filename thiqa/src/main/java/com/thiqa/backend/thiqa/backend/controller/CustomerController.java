@@ -2,16 +2,20 @@ package com.thiqa.backend.thiqa.backend.controller;
 
 import java.util.List;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.thiqa.backend.thiqa.backend.dto.CustomerResponse;
 import com.thiqa.backend.thiqa.backend.dto.StoreCardResponse;
 import com.thiqa.backend.thiqa.backend.dto.StoreDetailResponse;
 import com.thiqa.backend.thiqa.backend.entity.City;
+import com.thiqa.backend.thiqa.backend.entity.Customer;
 import com.thiqa.backend.thiqa.backend.entity.StoreCategory;
+import com.thiqa.backend.thiqa.backend.service.CustomerService;
 import com.thiqa.backend.thiqa.backend.service.StoreService;
 import com.thiqa.backend.thiqa.backend.shared.GlobalResponse;
 
@@ -23,6 +27,12 @@ import lombok.RequiredArgsConstructor;
 public class CustomerController {
 
   private final StoreService storeService;
+  private final CustomerService customerService;
+
+  @GetMapping("/me")
+  public GlobalResponse<CustomerResponse> me(@AuthenticationPrincipal Customer customer) {
+    return new GlobalResponse<>(customerService.me(customer));
+  }
 
   @GetMapping("/stores")
   public GlobalResponse<List<StoreCardResponse>> stores(
