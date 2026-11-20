@@ -3,6 +3,7 @@ package com.thiqa.backend.thiqa.backend.service;
 import com.thiqa.backend.thiqa.backend.dto.StoreCardResponse;
 import com.thiqa.backend.thiqa.backend.dto.StoreDetailResponse;
 import com.thiqa.backend.thiqa.backend.dto.StoreResponse;
+import com.thiqa.backend.thiqa.backend.dto.StoreSettingsRequest;
 import com.thiqa.backend.thiqa.backend.entity.City;
 import com.thiqa.backend.thiqa.backend.entity.Store;
 import com.thiqa.backend.thiqa.backend.entity.StoreCategory;
@@ -11,6 +12,7 @@ import com.thiqa.backend.thiqa.backend.shared.CustomResponseException;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -25,6 +27,16 @@ public class StoreService {
     return new StoreResponse(store.getId(), store.getName(), store.getCategory(), store.getCity(),
         store.getEmail(), store.getPhone(), store.isEmailVerified(),
         store.isAutoReject(), store.getRejectThreshold());
+  }
+
+  @Transactional
+  public StoreResponse updateSettings(Store store, StoreSettingsRequest request) {
+    store.setName(request.name().trim());
+    store.setCategory(request.category());
+    store.setCity(request.city());
+    store.setAutoReject(request.autoReject());
+    store.setRejectThreshold(request.rejectThreshold());
+    return me(storeRepository.save(store));
   }
 
   public List<StoreCardResponse> listStores(StoreCategory category, City city) {

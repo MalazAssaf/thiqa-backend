@@ -4,6 +4,7 @@ import com.thiqa.backend.thiqa.backend.dto.ProductCreateRequest;
 import com.thiqa.backend.thiqa.backend.dto.ProductResponse;
 import com.thiqa.backend.thiqa.backend.dto.ProductUpdateRequest;
 import com.thiqa.backend.thiqa.backend.dto.StoreResponse;
+import com.thiqa.backend.thiqa.backend.dto.StoreSettingsRequest;
 import com.thiqa.backend.thiqa.backend.entity.Store;
 import com.thiqa.backend.thiqa.backend.service.ProductService;
 import com.thiqa.backend.thiqa.backend.service.StoreService;
@@ -30,6 +31,12 @@ public class StoreController {
   @GetMapping("/me")
   public GlobalResponse<StoreResponse> me(@AuthenticationPrincipal Store store) {
     return new GlobalResponse<>(storeService.me(store));
+  }
+
+  @PutMapping("/settings")
+  public GlobalResponse<StoreResponse> updateSettings(@AuthenticationPrincipal Store store,
+      @Valid @RequestBody StoreSettingsRequest request) {
+    return new GlobalResponse<>(storeService.updateSettings(store, request));
   }
 
   @GetMapping("/products")
